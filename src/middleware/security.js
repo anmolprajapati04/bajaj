@@ -40,20 +40,42 @@ class SecurityMiddleware {
   }
 
   static corsOptions() {
-    return {
-      origin: (origin, callback) => {
-        if (!origin || config.ALLOWED_ORIGINS.includes(origin) || config.NODE_ENV === 'development') {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
+  return {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'https://your-vercel-app.vercel.app', // Your Vercel URL
+        /\.vercel\.app$/, // All Vercel deployments
+        /\.vercel\.dev$/  // Vercel preview deployments
+      ];
+      
+      if (config.NODE_ENV === 'development') {
+        allowedOrigins.push('http://localhost:*');
+      }
+      
+      const isAllowed = allowedOrigins.some(allowed => {
+        if (allowed instanceof RegExp) {
+          return allowed.test(origin);
         }
-      },
-      methods: ['GET', 'POST'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-      maxAge: 86400 // 24 hours
-    };
-  }
+        return allowed === origin;
+      });
+      
+      if (isAllowed || config.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
+    maxAge: 86400
+  };
+}
 
   static sanitizeInput(req, res, next) {
     if (req.body) {

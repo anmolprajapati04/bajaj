@@ -10,16 +10,18 @@ const config = {
   },
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ? 
     process.env.ALLOWED_ORIGINS.split(',') : 
-    ['http://localhost:3000'],
-  CHITKARA_EMAIL: 'anmol1525.be23@chitkara.edu.in' // Replace with your actual email
+    ['http://localhost:3000', 'https://your-vercel-app.vercel.app'],
+  CHITKARA_EMAIL: process.env.CHITKARA_EMAIL || 'anmol1525.be23@chitkara.edu.in'
 };
 
-// Validate required environment variables
-const requiredVars = ['GEMINI_API_KEY'];
-requiredVars.forEach(varName => {
-  if (!config[varName]) {
-    console.warn(`Warning: ${varName} is not set in environment variables`);
-  }
-});
+// Don't log warnings in production
+if (config.NODE_ENV !== 'production') {
+  const requiredVars = ['GEMINI_API_KEY'];
+  requiredVars.forEach(varName => {
+    if (!config[varName]) {
+      console.warn(`Warning: ${varName} is not set in environment variables`);
+    }
+  });
+}
 
 module.exports = config;
